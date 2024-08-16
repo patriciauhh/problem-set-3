@@ -16,11 +16,10 @@ def load_data():
         model_pred_df (pd.DataFrame): DataFrame containing model predictions
         genres_df (pd.DataFrame): DataFrame containing genre information
     '''
-    model_pred_df = pd.read_csv('prediction_model.csv')
-    genres_df = pd.read_csv('genres.csv')
+    model_pred_df = pd.read_csv('data/prediction_model_03.csv')
+    genres_df = pd.read_csv('data/genres.csv')
     
     return model_pred_df, genres_df
-
 
 def process_data(model_pred_df, genres_df):
     '''
@@ -39,21 +38,37 @@ def process_data(model_pred_df, genres_df):
     genre_tp_counts = {genre: 0 for genre in genre_list}
     genre_fp_counts = {genre: 0 for genre in genre_list}
     
-    # iterate through each row in model_pred_df to populate the dictionaries
+    # Convert genres to uppercase 
+    genre_list_upper = [genre.upper() for genre in genre_list]
+    
+    print("Columns in model_pred_df:", model_pred_df.columns)
+
+    # Iterate through each row in model_pred_df to populate the dictionaries
     for _, row in model_pred_df.iterrows():
-        for genre in genre_list:
+        actual_genres = row['actual genres']
+        predicted_genre = row['predicted']
+        
+        # Convert actual genres string to list
+        actual_genres_list = eval(actual_genres)
+
+        for genre in genre_list_upper:
             true_col = f'{genre}_true'
             pred_col = f'{genre}_pred'
+
+            if true_col not in model_pred_df.columns or pred_col not in model_pred_df.columns:
+                print(f"Warning: Columns {true_col} or {pred_col} not found in DataFrame")
+                continue  # Skip this genre if columns are missing
             
-            # update true count
-            genre_true_counts[genre] += row[true_col]
-            
-            # update true positive count
-            if row[true_col] == 1 and row[pred_col] == 1:
+            # Update true count
+            if genre in actual_genres_list:
+                genre_true_counts[genre] += 1
+
+            # Update true positive count
+            if genre == predicted_genre and genre in actual_genres_list:
                 genre_tp_counts[genre] += 1
-            
-            # update false positive count
-            if row[true_col] == 0 and row[pred_col] == 1:
+
+            # Update false positive count
+            if genre == predicted_genre and genre not in actual_genres_list:
                 genre_fp_counts[genre] += 1
                 
-    return genre_list, genre_true_counts, genre_tp_counts, genre_fp_counts
+    return genre_list_upper, genre_true_counts, genre_tp_counts, genre_fp_counts
