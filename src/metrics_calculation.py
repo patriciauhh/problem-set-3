@@ -12,7 +12,7 @@ import pandas as pd
 
 def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_counts, genre_fp_counts):
     '''
-    Calculate micro and macro metrics.
+    Calculate micro and macro metrics
     
     Args:
         model_pred_df (pd.DataFrame): DataFrame containing model predictions
@@ -24,13 +24,26 @@ def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_cou
     Returns:
         tuple: Micro precision, recall, F1 score
         lists of macro precision, recall, and F1 scores
+    
+    Hint #1: 
+    tp -> true positives
+    fp -> false positives
+    tn -> true negatives
+    fn -> false negatives
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+
+    Hint #2: Micro metrics are tuples, macro metrics are lists
+
     '''
-    # Calculate micro metrics by aggregating counts
+    # micro metrics
+    
     micro_tp = sum(genre_tp_counts.values())
     micro_fp = sum(genre_fp_counts.values())
     micro_fn = sum(genre_true_counts[genre] - genre_tp_counts.get(genre, 0) for genre in genre_list)
 
-    # Compute micro precision, recall, and F1 score
+    # compute micro precision, recall, and F1 score
     try:
         micro_precision = micro_tp / (micro_tp + micro_fp)
     except ZeroDivisionError:
@@ -46,12 +59,12 @@ def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_cou
     except ZeroDivisionError:
         micro_f1 = 0
 
-    # Initialize lists for macro metrics
+    # initialize lists for macro metrics
     macro_prec_list = []
     macro_recall_list = []
     macro_f1_list = []
 
-    # Compute macro metrics for each genre
+    # compute macro metrics for each genre
     for genre in genre_list:
         tp = genre_tp_counts.get(genre, 0)
         fp = genre_fp_counts.get(genre, 0)
@@ -72,12 +85,12 @@ def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_cou
         except ZeroDivisionError:
             f1 = 0
     
-        # Append metrics to their respective lists
+        # append metrics to their respective lists
         macro_prec_list.append(precision)
         macro_recall_list.append(recall)
         macro_f1_list.append(f1)
 
-    # Return micro metrics as a tuple and macro metrics as lists
+    # return micro metrics as a tuple and macro metrics as lists
     return micro_precision, micro_recall, micro_f1, macro_prec_list, macro_recall_list, macro_f1_list
 
     
@@ -91,8 +104,17 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
     
     Returns:
         tuple: Macro precision, recall, F1 score, and micro precision, recall, F1 score.
+    
+    Hint #1: You'll need these two lists
+    pred_rows = []
+    true_rows = []
+    
+    Hint #2: And a little later you'll need these two matrixes for sk-learn
+    pred_matrix = pd.DataFrame(pred_rows)
+    true_matrix = pd.DataFrame(true_rows)
     '''
-    # Prepare lists to store the true and predicted values
+    
+    # prepare lists to store the true and predicted values
     true_rows = []
     pred_rows = []
     

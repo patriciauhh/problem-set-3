@@ -21,6 +21,7 @@ def load_data():
     
     return model_pred_df, genres_df
 
+
 def process_data(model_pred_df, genres_df):
     '''
     Process data to get genre lists and count dictionaries
@@ -37,38 +38,29 @@ def process_data(model_pred_df, genres_df):
     genre_true_counts = {genre: 0 for genre in genre_list}
     genre_tp_counts = {genre: 0 for genre in genre_list}
     genre_fp_counts = {genre: 0 for genre in genre_list}
-    
-    # Convert genres to uppercase 
-    genre_list_upper = [genre.upper() for genre in genre_list]
-    
-    print("Columns in model_pred_df:", model_pred_df.columns)
 
-    # Iterate through each row in model_pred_df to populate the dictionaries
+    # populate dictionaries
     for _, row in model_pred_df.iterrows():
         actual_genres = row['actual genres']
         predicted_genre = row['predicted']
-        
-        # Convert actual genres string to list
-        actual_genres_list = eval(actual_genres)
 
-        for genre in genre_list_upper:
+        # string to list
+        actual_genres_list = actual_genres.strip("[]").replace("'", "").split(", ")
+
+        for genre in genre_list:
             true_col = f'{genre}_true'
             pred_col = f'{genre}_pred'
 
-            if true_col not in model_pred_df.columns or pred_col not in model_pred_df.columns:
-                print(f"Warning: Columns {true_col} or {pred_col} not found in DataFrame")
-                continue  # Skip this genre if columns are missing
-            
-            # Update true count
+            # update true count
             if genre in actual_genres_list:
                 genre_true_counts[genre] += 1
 
-            # Update true positive count
+            # update positive true
             if genre == predicted_genre and genre in actual_genres_list:
                 genre_tp_counts[genre] += 1
 
-            # Update false positive count
+            # update false positive
             if genre == predicted_genre and genre not in actual_genres_list:
                 genre_fp_counts[genre] += 1
-                
-    return genre_list_upper, genre_true_counts, genre_tp_counts, genre_fp_counts
+
+    return genre_list, genre_true_counts, genre_tp_counts, genre_fp_counts
