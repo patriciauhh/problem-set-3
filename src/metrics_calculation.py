@@ -126,23 +126,19 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
         true_rows.append(true_values)
         pred_rows.append(pred_values)
     
-    # Convert lists to matrices for sklearn
+    # convert lists to matrixes for sklearn
     true_matrix = np.array(true_rows)
     pred_matrix = np.array(pred_rows)
-    
-    # Flatten the matrices to compute metrics using sklearn
-    true_flat = true_matrix.flatten()
-    pred_flat = pred_matrix.flatten()
-    
+
     # Calculate precision, recall, and F1 score using sklearn
-    precision, recall, f1, _ = precision_recall_fscore_support(true_flat, pred_flat, average=None, labels=[1])
+    precision, recall, f1, _ = precision_recall_fscore_support(true_matrix, pred_matrix, average=None, labels=[1])
     
     macro_prec = precision.mean()
     macro_rec = recall.mean()
     macro_f1 = f1.mean()
     
     # Calculate micro metrics
-    micro_prec, micro_rec, micro_f1, _ = precision_recall_fscore_support(true_flat, pred_flat, average='micro', labels=[1])
+    micro_prec, micro_rec, micro_f1, _ = precision_recall_fscore_support(true_matrix, pred_matrix, average='micro', labels=[1])
     
     return macro_prec, macro_rec, macro_f1, micro_prec, micro_rec, micro_f1
 
