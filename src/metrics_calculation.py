@@ -118,7 +118,7 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
     true_rows = []
     pred_rows = []
     
-    # Iterate over each row in model_pred_df
+    # iterate over each row in model_pred_df
     for _, row in model_pred_df.iterrows():
         true_values = [row[f'{genre}_true'] for genre in genre_list]
         pred_values = [row[f'{genre}_pred'] for genre in genre_list]
