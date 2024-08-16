@@ -12,7 +12,7 @@ import pandas as pd
 
 def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_counts, genre_fp_counts):
     '''
-    Calculate micro and macro metrics
+    Calculate micro and macro metrics.
     
     Args:
         model_pred_df (pd.DataFrame): DataFrame containing model predictions
@@ -24,51 +24,61 @@ def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_cou
     Returns:
         tuple: Micro precision, recall, F1 score
         lists of macro precision, recall, and F1 scores
-    
-    Hint #1: 
-    tp -> true positives
-    fp -> false positives
-    tn -> true negatives
-    fn -> false negatives
-
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-
-    Hint #2: Micro metrics are tuples, macro metrics are lists
-
     '''
-
- # initialize counters for micro metrics
+    # Calculate micro metrics by aggregating counts
     micro_tp = sum(genre_tp_counts.values())
     micro_fp = sum(genre_fp_counts.values())
-    micro_fn = sum([genre_true_counts[genre] - genre_tp_counts.get(genre, 0) for genre in genre_list])
-    
-    # calculate micro precision, recall, and F1 score
-    micro_precision = micro_tp / (micro_tp + micro_fp) if (micro_tp + micro_fp) > 0 else 0
-    micro_recall = micro_tp / (micro_tp + micro_fn) if (micro_tp + micro_fn) > 0 else 0
-    micro_f1 = 2 * (micro_precision * micro_recall) / (micro_precision + micro_recall) if (micro_precision + micro_recall) > 0 else 0
-    
-    # initialize lists for macro metrics
-    macro_precision_list = []
+    micro_fn = sum(genre_true_counts[genre] - genre_tp_counts.get(genre, 0) for genre in genre_list)
+
+    # Compute micro precision, recall, and F1 score
+    try:
+        micro_precision = micro_tp / (micro_tp + micro_fp)
+    except ZeroDivisionError:
+        micro_precision = 0
+
+    try:
+        micro_recall = micro_tp / (micro_tp + micro_fn)
+    except ZeroDivisionError:
+        micro_recall = 0
+
+    try:
+        micro_f1 = 2 * (micro_precision * micro_recall) / (micro_precision + micro_recall)
+    except ZeroDivisionError:
+        micro_f1 = 0
+
+    # Initialize lists for macro metrics
+    macro_prec_list = []
     macro_recall_list = []
     macro_f1_list = []
 
-    # calculate macro precision, recall, and F1 score for each genre
+    # Compute macro metrics for each genre
     for genre in genre_list:
         tp = genre_tp_counts.get(genre, 0)
         fp = genre_fp_counts.get(genre, 0)
         fn = genre_true_counts[genre] - tp
-        
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-        
-        macro_precision_list.append(precision)
+
+        try:
+            precision = tp / (tp + fp)
+        except ZeroDivisionError:
+            precision = 0
+    
+        try:
+            recall = tp / (tp + fn)
+        except ZeroDivisionError:
+            recall = 0
+
+        try:
+            f1 = 2 * (precision * recall) / (precision + recall)
+        except ZeroDivisionError:
+            f1 = 0
+    
+        # Append metrics to their respective lists
+        macro_prec_list.append(precision)
         macro_recall_list.append(recall)
         macro_f1_list.append(f1)
-    
-    return (micro_precision, micro_recall, micro_f1), macro_precision_list, macro_recall_list, macro_f1_list
 
+    # Return micro metrics as a tuple and macro metrics as lists
+    return micro_precision, micro_recall, micro_f1, macro_prec_list, macro_recall_list, macro_f1_list
 
     
 def calculate_sklearn_metrics(model_pred_df, genre_list):
@@ -81,14 +91,37 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
     
     Returns:
         tuple: Macro precision, recall, F1 score, and micro precision, recall, F1 score.
-    
-    Hint #1: You'll need these two lists
-    pred_rows = []
-    true_rows = []
-    
-    Hint #2: And a little later you'll need these two matrixes for sk-learn
-    pred_matrix = pd.DataFrame(pred_rows)
-    true_matrix = pd.DataFrame(true_rows)
     '''
+    # Prepare lists to store the true and predicted values
+    true_rows = []
+    pred_rows = []
+    
+    # Iterate over each row in model_pred_df
+    for _, row in model_pred_df.iterrows():
+        true_values = [row[f'{genre}_true'] for genre in genre_list]
+        pred_values = [row[f'{genre}_pred'] for genre in genre_list]
+        
+        true_rows.append(true_values)
+        pred_rows.append(pred_values)
+    
+    # Convert lists to matrices for sklearn
+    true_matrix = np.array(true_rows)
+    pred_matrix = np.array(pred_rows)
+    
+    # Flatten the matrices to compute metrics using sklearn
+    true_flat = true_matrix.flatten()
+    pred_flat = pred_matrix.flatten()
+    
+    # Calculate precision, recall, and F1 score using sklearn
+    precision, recall, f1, _ = precision_recall_fscore_support(true_flat, pred_flat, average=None, labels=[1])
+    
+    macro_prec = precision.mean()
+    macro_rec = recall.mean()
+    macro_f1 = f1.mean()
+    
+    # Calculate micro metrics
+    micro_prec, micro_rec, micro_f1, _ = precision_recall_fscore_support(true_flat, pred_flat, average='micro', labels=[1])
+    
+    return macro_prec, macro_rec, macro_f1, micro_prec, micro_rec, micro_f1
 
-    # Your code here
+
